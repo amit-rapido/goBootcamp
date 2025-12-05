@@ -1,0 +1,78 @@
+{
+    "_id": "1234567890",
+    "name": "Check Shirt",
+    "description": "Cotton Fabric",
+    "price": 100,
+    "quantity": 10,
+    "category": {
+        "name": "Shirt",
+        "description": "Cotton Fabric"
+    },
+    "image": "image1.jpg",
+    "seller_id": "seller_123",
+    "rating": {
+        "average": 4.5,
+        "total_reviews": 150
+    },
+    "createdAt": "2025-11-28",
+    "updatedAt": "2025-11-28"
+}
+
+
+READ SCENARIOS
+1.  List Products 
+    Fetch products with various filters and sorting options
+    Lookup Key : category.name, rating.average, createdAt, price, quantity
+    API : GET /products?category=Shirt&sort=rating&min_price=50&max_price=200&in_stock=true
+    DB Query : find({ "category.name": "Shirt", price: { $gte: 50, $lte: 200 }, quantity: { $gt: 0 } }).sort({ "rating.average": -1 })
+    Read heavy
+
+2.  Search Products (Keyword Search)
+    Query products by name, description, category using text search
+    Lookup Key : name, description, category.name (text search)
+    API : GET /products/search?keyword=shirt
+    DB Query : find({ $text: { $search: "shirt" } }) or find({ name: /shirt/i, description: /shirt/i })
+    Read heavy
+
+3.  Get Product by ID
+    Fetch single product with full details
+    Lookup Key : _id
+    API : GET /products/{productId}
+    DB Query : findOne({ _id: <> })
+    Read heavy
+
+4.  Admin Dashboard: Product List
+    Admin viewing list of all products
+    Lookup Key : seller_id, createdAt
+    API : GET /admin/products
+    DB Query : find({}).sort({ createdAt: -1 })
+    Not Read heavy
+
+
+WRITE SCENARIOS
+1.  Add New Product
+    Create new product
+    API : POST /products
+    Write heavy
+
+2.  Update Product 
+    Update simple fields: name, description, image, category, price
+    API : PUT /products/{productId}
+    Not Write heavy
+
+3.  Delete Product
+    Soft delete or hard delete product
+    API : DELETE /products/{productId}
+    Not Write heavy
+
+4.  Bulk Update Products (Admin)
+    Update multiple products at once
+    API : PUT /admin/products/bulk
+    Write heavy
+
+
+INDEX
+db.products.createIndex({ "category.name": 1 }) //  category browsing
+db.products.createIndex({ name: "text", description: "text", "category.name": "text" }) // Text search functionality
+db.products.createIndex({ "category.name": 1, "rating.average": -1, price: 1 }) // Composite: covers category + rating sort + price filter (most list queries)
+db.products.createIndex({ seller_id: 1, createdAt: -1 }) // Seller operations + admin dashboard

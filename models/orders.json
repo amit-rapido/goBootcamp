@@ -1,0 +1,111 @@
+{
+    "_id": "1234567890",
+    "user": ObjectId("1234567890"),
+    "products": [
+        {
+            "product": ObjectId("1234567890"),
+            "quantity": 1
+        }
+    ],
+    "totalAmount": 100,
+    "status": "delivered",
+    "paymentMethod": "cash",
+    "paymentStatus": "done",
+    "createdAt": "2025-11-28",
+    "updatedAt": "2025-11-28",
+    "deliveryAddress": ObjectId("1234567890"),
+    "deliveryDate": "2025-11-28",
+    "deliveryTime": "10:00 AM",
+    "invoiceNumber": "INV-1234567890"
+}
+
+
+READ SCENARIOS
+
+1.  User Order History
+    Fetch all orders for a specific user
+    Lookup Key : userId
+    API : GET /orders?user_id={userId}
+    DB Query : find({ user: <> }).sort({ createdAt: -1 })
+    Read heavy
+
+2.  Order Detail Page
+    Fetch specific order details by order ID
+    Lookup Key : _id
+    API : GET /orders/{orderId}
+    DB Query : findOne({ _id: <> })
+    Read heavy
+
+3.  Order Status Tracking
+    Fetch order status for tracking page
+    Lookup Key : _id
+    API : GET /orders/{orderId}/status
+    DB Query : findOne({ _id: <> }, { status: 1, updatedAt: 1, deliveryDate: 1 })
+    Read heavy
+
+4.  Admin Order Management - All Orders
+    Admin viewing all orders in the system
+    Lookup Key : createdAt, status
+    API : GET /admin/orders
+    DB Query : find({}).sort({ createdAt: -1 })
+    Not Read heavy
+
+
+WRITE SCENARIOS
+
+1.  Create Order (Checkout)
+    Create new order from cart during checkout
+    API : POST /orders/checkout
+    DB Query : insertOne({ user, products, totalAmount, status: "pending", paymentStatus: "pending", createdAt, updatedAt })
+    Write heavy
+
+2.  Update Order
+    Update simple fields: deliveryDate, deliveryTime, deliveryAddress, invoiceNumber
+    Lookup Key : _id
+    API : PUT /orders/{orderId}
+    Body : { "deliveryDate": "...", "deliveryTime": "...", "deliveryAddress": "...", "invoiceNumber": "..." }
+    DB Query : updateOne({ _id: <> }, { $set: { deliveryDate: <>, deliveryTime: <>, deliveryAddress: <>, invoiceNumber: <>, updatedAt } })
+    Not Write heavy
+
+3.  Update Order Status (pending -> confirmed -> shipped -> delivered)
+    Triggers: notifications, inventory updates, shipping labels
+    Lookup Key : _id
+    API : PUT /orders/{orderId}/status
+    Body : { "status": "shipped", "reason": "..." }
+    DB Query : updateOne({ _id: <> }, { $set: { status: <>, updatedAt } })
+    Write heavy
+    Note : Separate API because it will have some Business Logic like notifications, update inventory
+
+4.  Update Payment Status
+    Lookup Key : _id
+    API : PUT /orders/{orderId}/payment-status
+    Body : { "paymentStatus": "paid", "transactionId": "..." }
+    DB Query : updateOne({ _id: <> }, { $set: { paymentStatus: <>, updatedAt } })
+    NOTE : Separate API because it will have some Business Logic like If paid -> confirm order, deduct inventory, send confirmation
+    Write heavy
+
+5.  Cancel Order
+    Cancel an order with rollback logic
+    Triggers: payment refund, inventory restoration, notifications, email
+    Lookup Key : _id
+    API : PUT /orders/{orderId}/cancel
+    Body : { "reason": "Customer request", "refund": true }
+    DB Query : updateOne({ _id: <>, status: { $ne: "delivered" } }, { $set: { status: "cancelled", updatedAt } })
+    Write heavy
+
+6.  Refund Order
+    Process refund with payment gateway integration
+    Triggers: payment gateway call, order status update, notifications
+    Lookup Key : _id
+    API : PUT /orders/{orderId}/refund
+    Body : { "amount": 100, "reason": "..." }
+    DB Query : updateOne({ _id: <> }, { $set: { paymentStatus: "refunded", status: "cancelled", updatedAt } })
+    Business Logic : Call payment service, update payment records, restore inventory
+    Not Write heavy
+
+
+INDEX
+db.orders.createIndex({ user: 1, createdAt: -1 }) // For user order history (most important)
+db.orders.createIndex({ _id: 1 }) // For order detail lookup
+db.orders.createIndex({ status: 1, createdAt: -1 }) // For admin filtering by status
+db.orders.createIndex({ user: 1, status: 1, createdAt: -1 }) // Composite for user's orders by status

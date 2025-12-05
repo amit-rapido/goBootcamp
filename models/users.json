@@ -1,0 +1,74 @@
+{
+    "_id": "1234567890",
+    "name": "Amit",
+    "email": "amit.sharma@rapido.bike",
+    "phone": "9876543210",
+    "address": ObjectId("664e9c6b5442512ee0d8a3d4"),
+    "password": "******",
+    "createdAt": "2025-11-28",
+    "updatedAt": "2025-11-28",
+    "role": "customer",
+    "status": "active"
+}
+
+
+READ SCENARIOS
+1.  User Login 
+    Lookup Key : Phone/Email
+    API : POST /auth/login
+    DB Query : findOne({phone: <>}) or findOne({email: <>})
+    Read heavy 
+
+2.  Fetch User Profile
+    Lookup Key : _id
+    API : GET /users/{userId}
+    DB Query : findOne({_id: <>})
+    Not Read heavy 
+
+3.  Fetch User Details During Order Placement
+    Lookup Key : _id
+    API : GET /users/{userId}
+    DB Query : findOne({_id: <>})
+    Not Read heavy 
+
+4.  Admin vieweing users
+    Lookup Key : status and role
+    API : GET /users?status=active
+    DB Query : find({ status: "active" })
+    Not Read heavy 
+
+
+WRITE SCENARIOS
+1.  User Signup (Create new user)
+    API : POST /users
+    DB Query : insertOne({})
+    Write heavy 
+
+2.  Update User Details
+    API : PUT /users/{userId}
+    DB Query : updateOne({_id: <>}, {$set: {}})
+    Not Write heavy
+
+3.  Delete user
+    API : DELETE /users/{userId}
+    DB Query : deleteOne({_id: <>})
+    Not Write heavy
+
+4.  Update Status (Active / Blocked)
+    Admin changes user status by phone number
+    API : PUT /users/{userId}/status
+    DB Query : updateOne({phone: <>}, {$set: {status: <>}})
+    Not Write heavy
+
+5.  Update Role (Admin / User)
+    Admin changes user role by phone number
+    API : PUT /users/{userId}/role
+    DB Query : updateOne({phone: <>}, {$set: {role: <>}})
+    Not Write heavy
+
+
+INDEX 
+db.users.createIndex({ email: 1 }) // Needed for login,updates
+db.users.createIndex({ phone: 1 }) // Neeed for login,updates
+db.users.createIndex({ role: 1 }) // Needed for admin dashboard so that we can filter users by role
+db.users.createIndex({ status: 1 }) // Needed for admin dashboard so that we can filter users by status

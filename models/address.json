@@ -1,0 +1,10 @@
+{
+    "_id": "12345",
+    "address": "B1301, SJR Bluewaters",
+    "city": "Bangalore",
+    "state": "KA",
+    "zip": "560068",
+    "country": "India",
+    "createdAt": "2025-11-28",
+    "updatedAt": "2025-11-28"
+}

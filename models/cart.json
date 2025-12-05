@@ -1,0 +1,50 @@
+{
+    "_id": "1234567890",
+    "user": ObjectId("1234567890"),
+    "products": [
+        {
+            "product": ObjectId("1234567890"),
+            "quantity": 1,
+            "price": 100
+        }
+    ],
+    "totalAmount": 100,
+    "createdAt": "2025-11-28",
+    "updatedAt": "2025-11-28"
+}
+
+
+READ SCENARIOS
+1.  Get User's Cart
+    Fetch cart for a specific user
+    Lookup Key : user
+    API : GET /cart?user_id={userId}
+    DB Query : findOne({ user: <> })
+    Read heavy
+
+
+WRITE SCENARIOS
+    1.  Add Item to Cart
+        Add new product or increment quantity if exists
+        API : POST /cart/add
+        Write heavy
+    
+    2.  Remove Item from Cart
+        Remove specific product from cart
+        API : DELETE /cart/item
+        Write heavy
+    
+    3.  Update Item Quantity
+        Update quantity of existing cart item
+        API : PUT /cart/item
+        Write heavy
+    
+    4.  Clear Cart
+        Remove all items from cart
+        API : DELETE /cart
+        Write heavy
+
+
+INDEX
+db.cart.createIndex({ user: 1 }) // For user cart lookup (most important - unique)
+db.cart.createIndex({ user: 1, "products.product": 1 }) // For checking if product in cart

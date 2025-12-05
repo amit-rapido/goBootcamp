@@ -1,0 +1,19 @@
+{
+    "_id": "review_1234567890",
+    "product_id": "1234567890",
+    "user_id": "user_9876543210",
+    "user_name": "Amit Sharma",
+    "rating": 5,
+    "title": "Great Quality Shirt",
+    "comment": "The fabric is really good quality and fits perfectly. Highly recommended!",
+    "verified_purchase": true,
+    "order_id": "order_12345",
+    "helpful_count": 12,
+    "images": [
+        "review_image1.jpg",
+        "review_image2.jpg"
+    ],
+    "status": "approved",
+    "createdAt": "2025-11-28",
+    "updatedAt": "2025-11-28"
+}
